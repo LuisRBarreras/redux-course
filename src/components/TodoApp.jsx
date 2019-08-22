@@ -1,75 +1,6 @@
-import { createStore, } from 'redux';
 import React from 'react';
 import Todo from './Todo';
-
-const todo = (state, action) => {
-    switch (action.type) {
-        case 'ADD_TODO':
-            return {
-                id: action.id,
-                text: action.text,
-                completed: false
-            }
-
-        case 'TOGGLE_TODO':
-            if (state.id !== action.id) {
-                return state;
-            }
-            return {
-                ...state,
-                completed: !state.completed
-            };
-        default:
-            return state;
-    }
-
-}
-
-const todos = (state = [], action) => {
-    switch (action.type) {
-        case 'ADD_TODO':
-            return [
-                ...state,
-                todo(undefined, action)
-            ];
-        case 'TOGGLE_TODO':
-            return state.map(t => todo(t, action))
-        default:
-            return state;
-    }
-}
-
-
-const visibilityFilter = (state = 'SHOW_ALL', action) => {
-    switch (action.type) {
-        case 'SET_VISIBILITY_FILTER':
-            return action.filter;
-        default:
-            return state;
-    }
-
-}
-
-
-const combineReducers = (reducers) => {
-    return (state = {}, action) => {
-        return Object.keys(reducers).reduce(
-            (nextState, key) => {
-                nextState[key] = reducers[key](
-                    state[key],
-                    action
-                );
-                return nextState;
-            }, {});
-    };
-}
-
-const todoApp = combineReducers({
-    todos,
-    visibilityFilter
-});
-
-const store = createStore(todoApp);
+import PropTypes from 'prop-types';
 
 const Link = ({ active, children, onClick }) => {
     if (active) {
@@ -80,8 +11,7 @@ const Link = ({ active, children, onClick }) => {
             e.preventDefault();
             onClick();
         }}>{children}</a>
-    )
-
+    );
 }
 
 const TodoList = ({ todos, onTodoClick }) => {
@@ -95,7 +25,6 @@ const TodoList = ({ todos, onTodoClick }) => {
                 />
             )}
         </ul>
-
     )
 }
 
@@ -113,11 +42,11 @@ const getVisibleTodos = (todos, filter) => {
             return todos;
 
     }
-
 }
 
 class FilterLink extends React.Component {
     componentDidMount() {
+        const { store } = this.context;
         store.subscribe(() => {
             this.forceUpdate()
         });
@@ -129,13 +58,12 @@ class FilterLink extends React.Component {
 
     render() {
         const props = this.props;
+        const { store } = this.context;
         const state = store.getState();
 
         return (
             <Link
-                active={
-                    props.filter === state.visibilityFilter
-                }
+                active={props.filter === state.visibilityFilter}
                 onClick={() =>
                     store.dispatch({
                         type: 'SET_VISIBILITY_FILTER',
@@ -149,21 +77,26 @@ class FilterLink extends React.Component {
     }
 }
 
+FilterLink.contextTypes = {
+    store: PropTypes.object
+};
+
 const Footer = () => {
     return (
         <p>
             Show:
             {' '}
-            <FilterLink filter='SHOW_ALL'> All </FilterLink>
+            <FilterLink filter='SHOW_ALL' > All </FilterLink>
             {' '}
-            <FilterLink filter='SHOW_ACTIVE' > Active </FilterLink>
+            <FilterLink filter='SHOW_ACTIVE'> Active </FilterLink>
             {' '}
-            <FilterLink filter='SHOW_COMPLETED' > Completed </FilterLink>
+            <FilterLink filter='SHOW_COMPLETED'> Completed </FilterLink>
         </p>
     );
 }
 
-const AddTodo = () => {
+let nextTodoId = 0;
+const AddTodo = (props, {store}) => {
     let input;
     return (
         <div>
@@ -174,11 +107,15 @@ const AddTodo = () => {
             }}>Add Todo</button>
         </div>
     );
-
 }
+
+AddTodo.contextTypes = {
+    store: PropTypes.object
+};
 
 class VisibleTodoList extends React.Component {
     componentDidMount() {
+        const { store } = this.context;
         store.subscribe(() => {
             this.forceUpdate()
         });
@@ -190,6 +127,7 @@ class VisibleTodoList extends React.Component {
 
     render() {
         const props = this.props;
+        const { store } = this.context;
         const state = store.getState();
 
         return (
@@ -198,25 +136,21 @@ class VisibleTodoList extends React.Component {
                 onTodoClick={id => store.dispatch({ type: 'TOGGLE_TODO', id })}
             />
         );
-
-
     }
 }
-
-let nextTodoId = 0;
-
-
+VisibleTodoList.contextTypes = {
+    store: PropTypes.object
+};
 
 const TodoApp = () => {
     return (
         <div>
-            <AddTodo />
+            <AddTodo/>
             <VisibleTodoList />
             <Footer />
         </div>
     );
 }
-
 
 
 export default TodoApp;
