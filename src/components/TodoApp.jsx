@@ -2,6 +2,30 @@ import React from 'react';
 import Todo from './Todo';
 import { connect } from 'react-redux'
 
+
+//actions component
+let nextTodoId = 0;
+const addTodo = (text) => {
+    return {
+        type: 'ADD_TODO',
+        id: nextTodoId++,
+        text
+    }
+};
+
+const setVisibilityFilter = (filter) => {
+    return {
+        type: 'SET_VISIBILITY_FILTER',
+        filter
+    }
+};
+const toggleTodo = (id) => {
+    return {
+        type: 'TOGGLE_TODO',
+        id
+    }
+};
+
 const Link = ({ active, children, onClick }) => {
     if (active) {
         return <span>{children}</span>
@@ -54,10 +78,7 @@ const mapStateToLinkProps = (state, ownProps) => {
 const mapDispatchToLinkProps = (dispatch, ownProps) => {
     return {
         onClick: () => {
-            dispatch({
-                type: 'SET_VISIBILITY_FILTER',
-                filter: ownProps.filter
-            })
+            dispatch(setVisibilityFilter(ownProps.filter))
         }
     }
 }
@@ -82,14 +103,16 @@ const Footer = () => {
     );
 }
 
-let nextTodoId = 0;
+
+
+
 let AddTodo = ({ dispatch }) => {
     let input;
     return (
         <div>
             <input ref={node => { input = node; }} />
             <button onClick={() => {
-                dispatch({ type: 'ADD_TODO', id: nextTodoId++, text: input.value });
+                dispatch(addTodo(input.value));
                 input.value = '';
             }}>Add Todo</button>
         </div>
@@ -114,7 +137,7 @@ const masStateToTodoListProps = (state) => {
 
 const mapDispatchToTodoListProps = (dispatch) => {
     return {
-        onTodoClick: id => dispatch({ type: 'TOGGLE_TODO', id })
+        onTodoClick: id => dispatch(toggleTodo(id));
     }
 }
 const VisibleTodoList = connect(
